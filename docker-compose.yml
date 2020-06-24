@@ -1,0 +1,55 @@
+version: '3.7'
+
+services:
+
+  traefik:
+    image: traefik:v2.0.7
+    command:
+    - --log=true
+    - --log.level=DEBUG
+    - --accesslog=true
+    - --entrypoints.http.address=:80
+    - --entrypoints.https.address=:443
+    - --providers.docker=true
+    - --providers.docker.exposedByDefault=false
+    - --certificatesresolvers.lehttp.acme.httpchallenge.entrypoint=http
+    ports:
+    - 80:80
+    - 443:443
+    volumes:
+    - /var/run/docker.sock:/var/run/docker.sock:ro
+    restart: always
+
+  sonarqube:
+    image: sonarqube:7.9.3-community
+    restart: always
+    labels:
+      traefik.enable: "true"
+      traefik.http.routers.sonarqube.rule: "Host(`${SONARQUBE_DNS_NAME}`)"
+      traefik.http.routers.sonarqube.entrypoints: https
+      traefik.http.routers.sonarqube.tls: true
+      traefik.http.routers.sonarqube.tls.certresolver: lehttp
+      traefik.http.services.sonarqube.loadbalancer.server.port: 9000
+
+  java8u242:
+    image: maven:3.6.3-openjsk-8u242-slim
+    command:
+    - sh
+    - -c
+    - while true; do sleep 5; done
+    build:
+      context: docker-maven/openjdk-8u242-slim/
+    volumes:
+    - ./m2:/root/.m2
+
+  java8u252:
+    image: maven:3.6.3-openjsk-8252-slim
+    command:
+    - sh
+    - -c
+    - while true; do sleep 5; done
+    build:
+      context: docker-maven/openjdk-8u252-slim/
+    volumes:
+    - ./m2:/root/.m2
+
