@@ -1,0 +1,5 @@
+tls:
+  options:
+    http11only:
+      alpnProtocols:
+        - http/1.1

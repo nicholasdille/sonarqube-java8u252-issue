@@ -3,36 +3,46 @@ version: '3.7'
 services:
 
   traefik:
-    image: traefik:v2.0.7
+    image: traefik:v2.5
     command:
     - --log=true
     - --log.level=DEBUG
     - --accesslog=true
     - --entrypoints.http.address=:80
     - --entrypoints.https.address=:443
+    - --providers.file.filename=/config/traefik.yaml
     - --providers.docker=true
     - --providers.docker.exposedByDefault=false
     - --certificatesresolvers.lehttp.acme.httpchallenge.entrypoint=http
+    - --certificatesresolvers.lehttp.acme.storage=/acme/acme.json
     ports:
     - 80:80
     - 443:443
     volumes:
     - /var/run/docker.sock:/var/run/docker.sock:ro
+    - ./traefik.yaml:/config/traefik.yaml:ro
+    - ./acme.json:/acme/acme.json
     restart: always
 
   sonarqube:
     image: sonarqube:7.9.3-community
     restart: always
+    volumes:
+    - ./data:/opt/sonarqube/data
     labels:
       traefik.enable: "true"
-      traefik.http.routers.sonarqube.rule: "Host(`${SONARQUBE_DNS_NAME}`)"
-      traefik.http.routers.sonarqube.entrypoints: https
-      traefik.http.routers.sonarqube.tls: true
-      traefik.http.routers.sonarqube.tls.certresolver: lehttp
+      traefik.http.routers.sonarqube-http.rule: "Host(`${SONARQUBE_DNS_NAME}`)"
+      traefik.http.routers.sonarqube-http.entrypoints: http
+      traefik.http.routers.sonarqube-http.middlewares: https-redirect
+      traefik.http.routers.sonarqube-https.rule: "Host(`${SONARQUBE_DNS_NAME}`)"
+      traefik.http.routers.sonarqube-https.entrypoints: https
+      traefik.http.routers.sonarqube-https.tls: true
+      traefik.http.routers.sonarqube-https.tls.certresolver: lehttp
+      traefik.http.routers.sonarqube-https.tls.options: http11only@file
       traefik.http.services.sonarqube.loadbalancer.server.port: 9000
 
   java8u242:
-    image: maven:3.6.3-openjsk-8u242-slim
+    image: maven:openjdk-8u242-slim
     command:
     - sh
     - -c
@@ -43,7 +53,7 @@ services:
     - ./m2:/root/.m2
 
   java8u252:
-    image: maven:3.6.3-openjsk-8252-slim
+    image: maven:openjdk-8u252-slim
     command:
     - sh
     - -c
