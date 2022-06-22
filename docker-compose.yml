@@ -3,7 +3,7 @@ version: '3.7'
 services:
 
   traefik:
-    image: traefik:v2.5
+    image: traefik:v2.7
     command:
     - --log=true
     - --log.level=DEBUG
@@ -25,7 +25,7 @@ services:
     restart: always
 
   sonarqube:
-    image: sonarqube:7.9.3-community
+    image: sonarqube:9.4.0-community
     restart: always
     volumes:
     - ./data:/opt/sonarqube/data
@@ -43,23 +43,33 @@ services:
 
   java8u242:
     image: maven:openjdk-8u242-slim
+    build:
+      context: docker-maven/openjdk-8u242-slim/
     command:
     - sh
     - -c
     - while true; do sleep 5; done
-    build:
-      context: docker-maven/openjdk-8u242-slim/
     volumes:
     - ./m2:/root/.m2
 
   java8u252:
     image: maven:openjdk-8u252-slim
+    build:
+      context: docker-maven/openjdk-8u252-slim/
     command:
     - sh
     - -c
     - while true; do sleep 5; done
-    build:
-      context: docker-maven/openjdk-8u252-slim/
     volumes:
     - ./m2:/root/.m2
 
+  java8:
+    image: maven:openjdk-8-slim
+    build:
+      context: docker-maven/openjdk-8-slim/
+    command:
+    - sh
+    - -c
+    - while true; do sleep 5; done
+    volumes:
+    - ./m2:/root/.m2
